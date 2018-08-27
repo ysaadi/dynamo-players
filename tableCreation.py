@@ -7,24 +7,24 @@ import boto3
 def createPlayerTable(dynamodb):
 
   table = dynamodb.create_table(
-    TableName='Movies',
+    TableName='Players',
     KeySchema=[
       {
-        'AttributeName': 'id',
+        'AttributeName': 'sport',
         'KeyType': 'HASH'  # Partition key
       },
       {
-        'AttributeName': 'sport',
+        'AttributeName': 'id',
         'KeyType': 'RANGE'  # Sort key
       }
     ],
     AttributeDefinitions=[
       {
-        'AttributeName': 'id',
+        'AttributeName': 'sport',
         'AttributeType': 'S'
       },
       {
-        'AttributeName': 'sport',
+        'AttributeName': 'id',
         'AttributeType': 'S'
       },
 
