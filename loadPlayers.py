@@ -9,7 +9,8 @@ def loadPlayers(sport):
   playerDict = json.loads(r.text)
   players = playerDict['body']['players']
   for player in players:
-    for key, value in player.items(): #I should be able to iterate and modify through player.items()
+    for key in player.keys(): #I am not able to iterate over player.items()
+      value = player[key]
       if value == '':
         del player[key]
     player.update({'sport': sport})
