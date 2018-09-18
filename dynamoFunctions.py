@@ -3,7 +3,9 @@ import boto3
 from boto3.dynamodb.conditions import Key, Attr
 import logging.config
 import os
+import logging
 
+logger = logging.getLogger(__name__)
 
 def getPlayer(table, sport, id):
   result=table.query(KeyConditionExpression=Key('sport').eq(sport) & Key('id').eq(id))
@@ -20,8 +22,6 @@ def getSportsPlayers(table, sport):
   playerCount=0
   while 'LastEvaluatedKey' in response:
     playerCount+=response['Count']
-    for key in response:
-      print(key)
     response=table.query(ProjectionExpression="id, fullname",
                                KeyConditionExpression=Key('sport').eq('baseball'),
                                 ExclusiveStartKey=response['LastEvaluatedKey'])
@@ -32,10 +32,7 @@ def getSportsPlayers(table, sport):
 def createPlayer(playerTable, sportTable, playerDict):
   dynamoClient=boto3.client('dynamodb')
   if (getSport(table=sportTable, sport=playerDict['sport'])==None):
-    logger.error('user {userid} has an invalid sport: {sport}.  Please correct
-                 the sport name or add the sport the sports
-                 table.'.format(userid=playerDict['id'],
-                                sport=playerDict['sport']))
+    logger.error('user {userid} has an invalid sport: {sport}.  Please correct the sport name or add the sport the sports table.'.format(userid=playerDict['id'], sport=playerDict['sport']))
     return
   try:
     result=playerTable.put_item(Item=playerDict,
@@ -67,7 +64,11 @@ def createSport(table,sportDict):
     logger.info('creation result is %s' % result)
     #todo: need to log if a modification occured.
   except dynamoClient.exceptions.ConditionalCheckFailedException as err:
-    logger.error("Creation Failed.  User already exists: {0}".format(err))
+    logger.error("Creation Failed.  Sport already exists: {0}".format(err))
+
+def getSports(table):
+  result=table.scan()
+  return result['Items']
 
 def getSport(table, sport):
   result=table.query(KeyConditionExpression=Key('sport').eq(sport))
@@ -77,9 +78,11 @@ def getSport(table, sport):
     logger.info('could not find sport %s' % (sport))
     return None
 
-def deleteSport(sport, id):
-  result=table.delete_item(Key={ 'sport': sport})
-  logger.info('result of deletion is : {0}'.format(result))
+def deleteSport(table, sport):
+  result=table.delete_item(Key={ 'sport': sport}, ReturnValues='ALL_OLD')
+  if result['Attributes']==None:
+    return None
+  return str(result['Attributes'])
 
 def setupLogging(logConfigPath, defaultLevel=logging.INFO):
   if(not os.path.isfile(logConfigPath)):
@@ -93,19 +96,15 @@ def main():
   dynamodb = boto3.resource('dynamodb', region_name='us-east-2')
   dynamoClient=boto3.client('dynamodb')
   playerTable = dynamodb.Table('Players')
-  global logger
-  dir_path=os.path.dirname(os.path.realpath(__file__))
-  logConfigPath=os.path.join(dir_path, 'config', 'logconfig.json')
-  logger=logging.getLogger(__name__)
-  #logger.setLevel(logging.INFO)
-  setupLogging(logConfigPath)
+#  global logger
+#  dir_path=os.path.dirname(os.path.realpath(__file__))
+#  logConfigPath=os.path.join(dir_path, 'config', 'logconfig.json')
+#  logger=logging.getLogger(__name__)
+#  #logger.setLevel(logging.INFO)
   
   sportTable=dynamodb.Table('Sports')
-  baseball={'sport':'baseball'}
-  football={'sport':'football'}
-  basketball={'sport':'basketball'}
-  createSport(table=sportTable, sportDict=football)
-  createSport(table=sportTable, sportDict=basketball)
+  deleteReturn=deleteSport(sportTable,'soccer')
+  print(deleteReturn)
 #  players, count=getSportsPlayers(playerTable, 'baseball'
 #  print(players)
 #  player=getPlayer(playerTable, 'baseball', '585626')
