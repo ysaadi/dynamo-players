@@ -52,7 +52,7 @@ def deletePlayer(table, sport, id):
   result=table.delete_item(Key={'id': id, 'sport': sport})
   logger.info('result of deletion is : {0}'.format(result))
 
-def updatePlayer(table, id, sport, playerDict):
+def updatePlayer(table, playerDict):
   dynamoClient=boto3.client('dynamodb')
   #todo, this does not handle modifying a player's sport.
   if not validatePlayer(playerDict):
