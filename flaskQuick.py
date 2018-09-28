@@ -36,11 +36,46 @@ def createSport(sport):
     abort(409)    #ToDo, print a custom error for this HTTP code.
   return str(response)
 
-@app.route('/sport/<sport>', methods=['DELETE'])
+@app.route('/sports/<sport>', methods=['DELETE'])
 def deleteSport(sport):
-  response=dynamoFunctions.deleteSport(sportTable, {'sport': sport})
+  response=dynamoFunctions.deleteSport(sportTable, sport)
   if response==None:
     abort(404)    #ToDo, print a custom error for this HTTP code.
   return str(response)
 
+@app.route('/sports/<sport>/users', methods=['GET'])
+def getSportsPlayers(sport):
+  response=dynamoFunctions.getSportsPlayers(playerTable, sport)
+  response=list(map(str, response))
+  return '\n\n'.join(response)
 
+@app.route('/sports/<sport>/users/<userid>', methods=['GET'])
+def getPlayer(sport, userid):
+  response=dynamoFunctions.getPlayer(playerTable, sport, userid)
+  if response==None:
+    abort(404)
+  return str(response)
+
+@app.route('/sports/<sport>/users/user', methods=['POST'])
+def createPlayer(sport):
+  #todo handle error if user exists
+  if request.json==None:
+    abort(400)
+  response=dynamoFunctions.createPlayer(playerTable, sportTable, request.json)
+  if response==None:
+    abort(400)
+  return('Creation Successful for user with id {0}'.format(request.json['id']))
+
+@app.route('/sports/<sport>/users/<userid>', methods=['DELETE'])
+def deletePlayer(sport, userid):
+  response=dynamoFunctions(playerTable, sport, userid)
+  return response
+
+@app.route('/sports/<sport>/users/<userid>', methods=['PUT'])
+def updatePlayer(sport, userid):
+  if request.json==None:
+    abort(400)
+  response=dynamoFunctions.updatePlayer(playerTable, request.json)
+  if response == None:
+    abort(400)
+  return(str(response))
