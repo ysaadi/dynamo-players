@@ -33,19 +33,20 @@ def getSportsPlayers(table, sport):
   playerCount+=response['Count']
   return sportsPlayers
 
-def createPlayer(playerTable, sportTable, playerDict):
+def createPlayer(playerTable, playerDict):
   dynamoClient=boto3.client('dynamodb')
-  if (getSport(table=sportTable, sport=playerDict['sport'])==None):
+  if not validatePlayer(playerDict):
     logger.error('user {userid} has an invalid sport: {sport}.  Please correct the sport name or add the sport the sports table.'.format(userid=playerDict['id'], sport=playerDict['sport']))
-    return
+    return None
   try:
     result=playerTable.put_item(Item=playerDict,
                     ConditionExpression='attribute_not_exists(id)')
     logger.info('creation result is %s' % result)
-    return 0
+    return "user successfully created"
     #todo: need to log if a modification occured.
   except dynamoClient.exceptions.ConditionalCheckFailedException as err:
     logger.error("Creation Failed.  User already exists: {0}".format(err))
+    return None
 
 def deletePlayer(table, sport, id):
   #todo check if deletion is successful
@@ -54,10 +55,10 @@ def deletePlayer(table, sport, id):
 
 def updatePlayer(table, playerDict):
   dynamoClient=boto3.client('dynamodb')
-  #todo, this does not handle modifying a player's sport.
+  #cannot modify sport, as it is a key.
   if not validatePlayer(playerDict):
     logger.error('player validation failed')
-    abort(400)
+    return None
   Keys={'sport': playerDict.pop('sport'), 'id': playerDict.pop('id')}
   updateExpression, updateAttributeDict, updateAttributeNames=generateUpdateExpression(playerDict)
   try:
@@ -169,11 +170,12 @@ def main():
 #  players=getSportsPlayers(playerTable, 'baseball'
 #  print(players)
   player=getPlayer(playerTable, 'baseball', '585626')
-  print(str(player))
-  player['randomAttr']=''
-  result=updatePlayer(playerTable, player)
-#  player['id']='5856262548'
-#  deletePlayer(playerTable, player['sport'], player['id'])
+#  player['randomAttr']=''
+#  result=updatePlayer(playerTable, player)
+  player['id']='5856262549'
+  deletePlayer(playerTable, player['sport'], player['id'])
+  result=createPlayer(playerTable, player)
+  print(result)
 #  player=getPlayer(playerTable, 'baseball', '5856262548')
 #  print(player)
 if __name__ == '__main__':

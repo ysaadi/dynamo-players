@@ -61,7 +61,7 @@ def createPlayer(sport):
   #todo handle error if user exists
   if request.json==None:
     abort(400)
-  response=dynamoFunctions.createPlayer(playerTable, sportTable, request.json)
+  response=dynamoFunctions.createPlayer(playerTable, request.json)
   if response==None:
     abort(400)
   return('Creation Successful for user with id {0}'.format(request.json['id']))
